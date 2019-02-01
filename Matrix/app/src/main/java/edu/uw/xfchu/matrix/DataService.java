@@ -13,7 +13,7 @@ public class DataService {
      */
     public static List<Event> getEventData() {
         List<Event> eventData = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 12; i++) {
             eventData.add(
                     new Event("Event", "136 102nd", "This is a family event")
             );
