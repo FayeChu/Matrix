@@ -2,6 +2,7 @@ package edu.uw.xfchu.matrix;
 
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,11 +12,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.util.List;
+
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class EventFragment extends Fragment {
+
+    private ListView listView;
 
     public EventFragment() {
         // Required empty public constructor
@@ -44,7 +49,7 @@ public class EventFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_event, container, false);
-        ListView listView = (ListView) view.findViewById(R.id.event_list);
+        listView = (ListView) view.findViewById(R.id.event_list);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 getActivity(),
                 android.R.layout.simple_list_item_1,
@@ -57,6 +62,7 @@ public class EventFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 mCallback.onItemSelected(i);
+                onItemSelected(i);
             }
         });
 
@@ -72,5 +78,14 @@ public class EventFragment extends Fragment {
         return names;
     }
 
+    public void onItemSelected(int position) {
+        for (int i = 0; i < listView.getChildCount(); i++){
+            if (position == i) {
+                listView.getChildAt(i).setBackgroundColor(Color.BLUE);
+            } else {
+                listView.getChildAt(i).setBackgroundColor(Color.parseColor("#FAFAFA"));
+            }
+        }
+    }
 
 }

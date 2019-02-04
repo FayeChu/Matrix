@@ -1,5 +1,6 @@
 package edu.uw.xfchu.matrix;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -7,7 +8,7 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class MainActivity extends AppCompatActivity implements EventFragment.OnItemSelectListener {
+public class MainActivity extends AppCompatActivity implements EventFragment.OnItemSelectListener, CommentFragment.OnItemSelectedListener {
 
     private EventFragment mListFragment;
     private CommentFragment mGridFragment;
@@ -43,7 +44,18 @@ public class MainActivity extends AppCompatActivity implements EventFragment.OnI
 
     @Override
     public void onItemSelected(int position) {
-        mGridFragment.onItemSelected(position);
+        if (!isTablet()) {
+            Intent intent = new Intent(this, EventGridActivity.class);
+            intent.putExtra("position", position);
+            startActivity(intent);
+        } else {
+            mGridFragment.onItemSelected(position);
+        }
+    }
+
+    @Override
+    public void onCommentSelected(int position) {
+        mListFragment.onItemSelected(position);
     }
 }
 
