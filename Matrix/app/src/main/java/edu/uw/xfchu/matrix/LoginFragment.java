@@ -7,6 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -37,6 +40,13 @@ public class LoginFragment extends Fragment {
         loginLayout = view.findViewById(R.id.loginLayout);
         logoutLayout = view.findViewById(R.id.logoutLayout);
         showLayout();
+
+        // Write a message to database
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("message");
+
+        myRef.setValue("Hello");
+
         return view;
     }
 
