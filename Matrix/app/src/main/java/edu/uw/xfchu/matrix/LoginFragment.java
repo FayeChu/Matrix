@@ -96,6 +96,41 @@ public class LoginFragment extends Fragment {
             }
         });
 
+        // Login button
+        mSubmitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final String username = mUsernameEditText.getText().toString();
+                final String password = Utils.md5Encryption(mPasswordEditText.getText().toString());
+
+                mDatabase.child("user").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.hasChild(username) && password.equals(dataSnapshot.child(username).child("user_password").getValue())) {
+                            Config.username = username;
+                            showLayout();
+                        } else {
+                            Toast.makeText(getActivity(), "Please login again", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+
+        // logout button
+        mLogoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Config.username = null;
+                showLayout();
+            }
+        });
+
         return view;
     }
 
