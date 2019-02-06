@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
@@ -30,6 +31,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private MapView mMapView;
     private View mView;
     private GoogleMap mMap;
+    private LocationTracker locationTracker;
 
     public MainFragment() {
         // Required empty public constructor
@@ -91,26 +93,33 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         googleMap.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.style_json)
         );
-        double latitude = 47.609250;
-        double longitude = -122.203440;
+//        double latitude = 47.609250;
+//        double longitude = -122.203440;
+
+        locationTracker = new LocationTracker(getActivity());
+        locationTracker.getLocation();
+        LatLng latLng = new LatLng(locationTracker.getLatitude(),
+                locationTracker.getLongitude());
+
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(latLng) // Sets the center of the map to location
+                .zoom(16) // Sets the zoom
+                .bearing(90) // Sets the orientation of the camera to east
+                .tilt(30) // Sets the tilt of the camera to 30 degrees
+                .build(); // Creates a CameraPosition from the builder
+
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
         // Create marker on Google map
         MarkerOptions marker = new MarkerOptions().position(
-                new LatLng(latitude, longitude)).title("This is your focus");
+                latLng).title("You");
 
         // Change marker Icon on google map
         marker.icon(BitmapDescriptorFactory.
-                defaultMarker(BitmapDescriptorFactory.HUE_ROSE));
+                fromResource(R.drawable.boy));
 
         // Add marker to google map
-        googleMap.addMarker(marker);
+        Marker mker = googleMap.addMarker(marker);
 
-        // Set up camera configuration, set camera to latlng set zoom to 12
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(latitude, longitude)).zoom(12).build();
-
-        // Animate the zoom process
-        googleMap.animateCamera(CameraUpdateFactory
-            .newCameraPosition(cameraPosition));
     }
 }

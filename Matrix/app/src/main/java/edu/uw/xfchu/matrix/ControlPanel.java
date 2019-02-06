@@ -61,8 +61,8 @@ public class ControlPanel extends AppCompatActivity {
                             location_textview.setText("");
                         } else {
                             user_textview.setText(Config.username);
-                            location_textview.setText("Lat=" + new DecimalFormat(".##").
-                                    format(latitude) + ",Lon=" + new DecimalFormat(".##").
+                            location_textview.setText("Lat=" + new DecimalFormat(".######").
+                                    format(latitude) + ",Lon=" + new DecimalFormat(".######").
                                     format(longitude)
                             );
                         }
