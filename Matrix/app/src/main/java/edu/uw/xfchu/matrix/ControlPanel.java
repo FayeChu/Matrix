@@ -1,5 +1,6 @@
 package edu.uw.xfchu.matrix;
 
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -12,6 +13,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+
+import java.text.DecimalFormat;
 
 public class ControlPanel extends AppCompatActivity {
 
@@ -32,6 +37,48 @@ public class ControlPanel extends AppCompatActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setHomeAsUpIndicator(R.drawable.menu);
         mDrawerLayout = findViewById(R.id.drawer_layout);
+
+        final LocationTracker mLocationTracker = new LocationTracker(this);
+        mDrawerLayout.addDrawerListener(
+                new DrawerLayout.DrawerListener() {
+                    @Override
+                    public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
+                        // Respond when the drawer's position changes
+                    }
+
+                    @Override
+                    public void onDrawerOpened(@NonNull View drawerView) {
+                        final TextView user_textview = (TextView) drawerView.findViewById(R.id.user_name);
+                        final TextView location_textview = (TextView) drawerView.findViewById(R.id.user_location);
+
+                        // Respond when drawer is opened
+                        mLocationTracker.getLocation();
+                        final double latitude = mLocationTracker.getLatitude();
+                        final double longitude = mLocationTracker.getLongitude();
+
+                        if (Config.username == null) {
+                            user_textview.setText("");
+                            location_textview.setText("");
+                        } else {
+                            user_textview.setText(Config.username);
+                            location_textview.setText("Lat=" + new DecimalFormat(".##").
+                                    format(latitude) + ",Lon=" + new DecimalFormat(".##").
+                                    format(longitude)
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onDrawerClosed(@NonNull View drawerView) {
+                        // Respond when the drawer is closed
+                    }
+
+                    @Override
+                    public void onDrawerStateChanged(int newState) {
+                        // Respond when the drawer motion state changes
+                    }
+                }
+        );
     }
 
     // add icon click listener to drawer layout
