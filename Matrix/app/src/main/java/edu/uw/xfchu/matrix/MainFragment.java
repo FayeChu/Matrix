@@ -4,6 +4,7 @@ package edu.uw.xfchu.matrix;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +33,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private View mView;
     private GoogleMap mMap;
     private LocationTracker locationTracker;
+    private FloatingActionButton fab_report;
 
     public MainFragment() {
         // Required empty public constructor
@@ -54,6 +56,15 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mMapView = (MapView) mView.findViewById(R.id.event_map_view);
+        fab_report = (FloatingActionButton) mView.findViewById(R.id.fab);
+
+        fab_report.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // show dialog
+            }
+        });
+
         if (mMapView != null) {
             mMapView.onCreate(null);
             mMapView.onResume(); // needed to get the map to display immediately
