@@ -34,6 +34,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap mMap;
     private LocationTracker locationTracker;
     private FloatingActionButton fab_report;
+    private FloatingActionButton fab_focus;
 
     public MainFragment() {
         // Required empty public constructor
@@ -55,13 +56,22 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        final MainFragment fragment = this;
         mMapView = (MapView) mView.findViewById(R.id.event_map_view);
         fab_report = (FloatingActionButton) mView.findViewById(R.id.fab);
+        fab_focus = (FloatingActionButton) mView.findViewById(R.id.fab_focus);
 
         fab_report.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // show dialog
+            }
+        });
+
+        fab_focus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapView.getMapAsync(fragment);
             }
         });
 
