@@ -1,6 +1,9 @@
 package edu.uw.xfchu.matrix;
 
 
+import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -9,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -35,6 +39,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private LocationTracker locationTracker;
     private FloatingActionButton fab_report;
     private FloatingActionButton fab_focus;
+    private Dialog dialog;
 
     public MainFragment() {
         // Required empty public constructor
@@ -65,6 +70,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onClick(View view) {
                 // show dialog
+                showDiag();
             }
         });
 
@@ -80,6 +86,18 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             mMapView.onResume(); // needed to get the map to display immediately
             mMapView.getMapAsync(this);
         }
+    }
+
+    // Animation show dialog
+    private void showDiag() {
+        final View dialogView = View.inflate(getActivity(), R.layout.dialog, null);
+        dialog = new Dialog(getActivity(), R.style.MyAlertDialogStyle);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(dialogView);
+
+        dialog.getWindow().setBackgroundDrawable(new
+                ColorDrawable(Color.TRANSPARENT));
+        dialog.show();
     }
 
     @Override
