@@ -1,7 +1,10 @@
 package edu.uw.xfchu.matrix;
 
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -9,8 +12,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.Window;
 
@@ -70,7 +75,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onClick(View view) {
                 // show dialog
-                showDiag();
+                showDialog();
             }
         });
 
@@ -89,15 +94,66 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     }
 
     // Animation show dialog
-    private void showDiag() {
+    private void showDialog() {
         final View dialogView = View.inflate(getActivity(), R.layout.dialog, null);
         dialog = new Dialog(getActivity(), R.style.MyAlertDialogStyle);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(dialogView);
 
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                animateDialog(dialogView, true, null);
+            }
+        });
+
+        dialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialogInterface, int i, KeyEvent keyEvent) {
+                if (i == KeyEvent.KEYCODE_BACK) {
+                    animateDialog(dialogView, false, dialog);
+                    return true;
+                }
+                return false;
+            }
+        });
+
         dialog.getWindow().setBackgroundDrawable(new
                 ColorDrawable(Color.TRANSPARENT));
         dialog.show();
+    }
+
+    // Add animation to Floating Action Button
+    private void animateDialog(View dialogView, boolean open, final Dialog dialog) {
+        final View view = dialogView.findViewById(R.id.dialog);
+        int w = view.getWidth();
+        int h = view.getHeight();
+
+        int endRadius = (int) Math.hypot(w, h);
+
+        int cx = (int) (fab_report.getX() + (fab_report.getWidth() / 2));
+        int cy = (int) (fab_report.getY()) + fab_report.getHeight() + 56;
+
+        if (open) {
+            Animator revealAnimator = ViewAnimationUtils.createCircularReveal(view, cx, cy, 0,
+                    endRadius);
+            view.setVisibility(View.VISIBLE);
+            revealAnimator.setDuration(500);
+            revealAnimator.start();
+        } else {
+            Animator anim = ViewAnimationUtils.createCircularReveal(view, cx, cy, endRadius,
+                    0);
+            anim.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    dialog.dismiss();
+                    view.setVisibility(View.INVISIBLE);
+                }
+            });
+            anim.setDuration(500);
+            anim.start();
+        }
     }
 
     @Override
