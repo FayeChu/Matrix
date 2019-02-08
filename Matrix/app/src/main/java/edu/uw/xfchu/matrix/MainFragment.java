@@ -5,6 +5,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -20,6 +21,13 @@ import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -34,6 +42,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,13 +59,24 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private View mView;
     private GoogleMap mMap;
     private LocationTracker locationTracker;
+    private DatabaseReference database;
+
     private FloatingActionButton fab_report;
     private FloatingActionButton fab_focus;
+
     private Dialog dialog;
     private RecyclerView mRecyclerView;
     private ReportRecyclerViewAdapter mRecyclerViewAdapter;
     private ViewSwitcher mViewSwitcher;
     private String event_type = null;
+
+    // Event specs
+    private ImageView mImageCamera;
+    private Button mBackButton;
+    private Button mSendButton;
+    private EditText mCommentEditText;
+    private ImageView mEventTypeImg;
+    private TextView mTypeTextView;
 
     public MainFragment() {
         // Required empty public constructor
@@ -65,11 +87,70 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         return mainFragment;
     }
 
+    private void setUpEventSpecs(final View dialogView) {
+        mImageCamera = (ImageView) dialogView.findViewById(R.id.event_camera_img);
+        mBackButton = (Button) dialogView.findViewById(R.id.event_back_button);
+        mSendButton = (Button) dialogView.findViewById(R.id.event_send_button);
+        mCommentEditText = (EditText) dialogView.findViewById(R.id.event_comment);
+        mEventTypeImg = (ImageView)dialogView.findViewById(R.id.event_type_img);
+        mTypeTextView = (TextView)dialogView.findViewById(R.id.event_type);
+
+        mBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mViewSwitcher.showPrevious();
+            }
+        });
+
+        mSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                uploadEvent(Config.username);
+            }
+        });
+    }
+
+    // Upload event
+    private String uploadEvent(String user_id) {
+        TrafficEvent event = new TrafficEvent();
+
+        event.setEvent_type(event_type);
+        event.setEvent_description(mCommentEditText.getText().toString());
+        event.setEvent_reporter_id(user_id);
+        event.setEvent_timestamp(System.currentTimeMillis());
+        event.setEvent_latitude(locationTracker.getLatitude());
+        event.setEvent_longitude(locationTracker.getLongitude());
+        event.setEvent_like_number(0);
+        event.setEvent_comment_number(0);
+
+        String key = database.child("events").push().getKey();
+        event.setId(key);
+        database.child("events").child(key).setValue(event, new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                if (databaseError != null) {
+                    Toast toast = Toast.makeText(getContext(),
+                            "The event is failed, please check your network status.", Toast.LENGTH_SHORT);
+                    toast.show();
+                    dialog.dismiss();
+                } else {
+                    Toast toast = Toast.makeText(getContext(), "The event is reported", Toast.LENGTH_SHORT);
+                    toast.show();
+                    //TODO: update map fragment
+                }
+            }
+        });
+
+        return key;
+    }
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         mView = inflater.inflate(R.layout.fragment_main, container, false);
+        database = FirebaseDatabase.getInstance().getReference();
         return mView;
     }
 
@@ -126,6 +207,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
                 event_type = item;
                 if (mViewSwitcher != null) {
                     mViewSwitcher.showNext();
+                    mTypeTextView.setText(event_type);
+                    mEventTypeImg.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(event_type)));
                 }
             }
         });
@@ -159,11 +242,22 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
+        // Add animation on viewSwitcher
+        Animation slide_in_left = AnimationUtils.loadAnimation(getActivity(),
+                android.R.anim.slide_in_left);
+        Animation slide_out_right = AnimationUtils.loadAnimation(getActivity(),
+                android.R.anim.slide_out_right);
+
+        mViewSwitcher.setInAnimation(slide_in_left);
+        mViewSwitcher.setOutAnimation(slide_out_right);
+
         dialog.getWindow().setBackgroundDrawable(new
                 ColorDrawable(Color.TRANSPARENT));
         setupRecyclerView(dialogView);
+        setUpEventSpecs(dialogView);
         dialog.show();
     }
+
 
     // Add animation to Floating Action Button
     private void animateDialog(View dialogView, boolean open, final Dialog dialog) {
