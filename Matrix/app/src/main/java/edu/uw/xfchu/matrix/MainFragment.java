@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ViewSwitcher;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -52,6 +53,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private Dialog dialog;
     private RecyclerView mRecyclerView;
     private ReportRecyclerViewAdapter mRecyclerViewAdapter;
+    private ViewSwitcher mViewSwitcher;
+    private String event_type = null;
 
     public MainFragment() {
         // Required empty public constructor
@@ -117,6 +120,15 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         listItems.add(new Item(Config.SLIPPERY, R.drawable.slippery));
 
         mRecyclerViewAdapter = new ReportRecyclerViewAdapter(getActivity(), listItems);
+        mRecyclerViewAdapter.setClickListener(new ReportRecyclerViewAdapter.OnClickListener() {
+            @Override
+            public void setItem(String item) {
+                event_type = item;
+                if (mViewSwitcher != null) {
+                    mViewSwitcher.showNext();
+                }
+            }
+        });
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
     }
 
@@ -125,6 +137,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private void showDialog() {
         final View dialogView = View.inflate(getActivity(), R.layout.dialog, null);
         dialog = new Dialog(getActivity(), R.style.MyAlertDialogStyle);
+        mViewSwitcher = (ViewSwitcher) dialogView.findViewById(R.id.viewSwitcher);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(dialogView);
 

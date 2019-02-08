@@ -15,9 +15,19 @@ public class ReportRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     private List<Item> mItems;
     private LayoutInflater mInflater;
+    private OnClickListener mClickListener;
+
     public ReportRecyclerViewAdapter(Context context, List<Item> items) {
         this.mInflater = LayoutInflater.from(context);
         this.mItems = items;
+    }
+
+    public interface OnClickListener {
+        public void setItem(String item);
+    }
+
+    public void setClickListener(OnClickListener callback) {
+        mClickListener = callback;
     }
 
     /**
@@ -40,10 +50,17 @@ public class ReportRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
      * @param position corresponding position
      */
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         ViewHolder viewHolder = (ViewHolder)holder;
         viewHolder.mTextView.setText(mItems.get(position).getDrawable_lable());
         viewHolder.mImageView.setImageResource(mItems.get(position).getDrawable_id());
+
+        viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mClickListener.setItem(mItems.get(position).getDrawable_lable());
+            }
+        });
     }
 
     // total number of cells
