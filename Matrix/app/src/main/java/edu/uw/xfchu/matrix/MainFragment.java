@@ -12,6 +12,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +34,9 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -45,6 +50,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private FloatingActionButton fab_report;
     private FloatingActionButton fab_focus;
     private Dialog dialog;
+    private RecyclerView mRecyclerView;
+    private ReportRecyclerViewAdapter mRecyclerViewAdapter;
 
     public MainFragment() {
         // Required empty public constructor
@@ -93,6 +100,27 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    // Set up type items
+    private void setupRecyclerView(View dialogView) {
+        mRecyclerView = dialogView.findViewById(R.id.recycler_view);
+        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+
+        List<Item> listItems = new ArrayList<>();
+        listItems.add(new Item(Config.POLICE, R.drawable.policeman));
+        listItems.add(new Item(Config.TRAFFIC, R.drawable.traffic));
+        listItems.add(new Item(Config.NO_ENTRY, R.drawable.no_entry));
+        listItems.add(new Item(Config.NO_PARKING, R.drawable.no_parking));
+        listItems.add(new Item(Config.SECURITY_CAMERA, R.drawable.security_camera));
+        listItems.add(new Item(Config.HEADLIGHT, R.drawable.lights));
+        listItems.add(new Item(Config.SPEEDING, R.drawable.speeding));
+        listItems.add(new Item(Config.CONSTRUCTION, R.drawable.construction));
+        listItems.add(new Item(Config.SLIPPERY, R.drawable.slippery));
+        
+        mRecyclerViewAdapter = new ReportRecyclerViewAdapter(getActivity(), listItems);
+        mRecyclerView.setAdapter(mRecyclerViewAdapter);
+    }
+
+
     // Animation show dialog
     private void showDialog() {
         final View dialogView = View.inflate(getActivity(), R.layout.dialog, null);
@@ -120,6 +148,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
 
         dialog.getWindow().setBackgroundDrawable(new
                 ColorDrawable(Color.TRANSPARENT));
+        setupRecyclerView(dialogView);
         dialog.show();
     }
 
