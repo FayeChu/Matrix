@@ -115,7 +115,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         listItems.add(new Item(Config.SPEEDING, R.drawable.speeding));
         listItems.add(new Item(Config.CONSTRUCTION, R.drawable.construction));
         listItems.add(new Item(Config.SLIPPERY, R.drawable.slippery));
-        
+
         mRecyclerViewAdapter = new ReportRecyclerViewAdapter(getActivity(), listItems);
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
     }
