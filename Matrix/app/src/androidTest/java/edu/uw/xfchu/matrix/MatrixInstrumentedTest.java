@@ -57,4 +57,18 @@ public class MatrixInstrumentedTest {
         //Check logcat
         onView(withText("LOGOUT")).check(matches(isDisplayed()));
     }
+
+    @Test
+    public void verifyMap() {
+        onView(withText("Map")).perform(click());
+        onView(withId(R.id.fab)).perform(click());
+
+        try {
+            Thread.sleep(3000);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        onView(withText("Police")).check(matches(isDisplayed()));
+    }
 }
