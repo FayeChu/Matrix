@@ -137,6 +137,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
                     Toast toast = Toast.makeText(getContext(), "The event is reported", Toast.LENGTH_SHORT);
                     toast.show();
                     //TODO: update map fragment
+
                 }
             }
         });

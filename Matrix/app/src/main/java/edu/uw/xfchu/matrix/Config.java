@@ -22,8 +22,8 @@ public class Config {
         trafficMap.put(NO_PARKING, R.drawable.no_parking);
         trafficMap.put(NO_ENTRY, R.drawable.no_entry);
         trafficMap.put(SECURITY_CAMERA, R.drawable.security_camera);
-        trafficMap.put(HEADLIGHT, R.drawable.speeding);
-        trafficMap.put(SPEEDING, R.drawable.policeman);
+        trafficMap.put(HEADLIGHT, R.drawable.lights);
+        trafficMap.put(SPEEDING, R.drawable.speeding);
         trafficMap.put(CONSTRUCTION, R.drawable.construction);
         trafficMap.put(SLIPPERY, R.drawable.slippery);
     }
