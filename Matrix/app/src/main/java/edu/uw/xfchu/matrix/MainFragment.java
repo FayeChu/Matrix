@@ -3,19 +3,23 @@ package edu.uw.xfchu.matrix;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,6 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import com.google.android.gms.auth.api.signin.internal.Storage;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -46,9 +51,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -90,6 +101,17 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     private ImageView mEventTypeImg;
     private TextView mTypeTextView;
 
+    // Set variables ready for uploading images
+    private FirebaseStorage storage;
+    private StorageReference storageRef;
+    private final String path = Environment.getExternalStorageDirectory() + "/temp.png";
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
     public MainFragment() {
         // Required empty public constructor
     }
@@ -117,7 +139,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uploadEvent(Config.username);
+                String key = uploadEvent(Config.username);
+
+                // Upload image and link the image to the corresponding key
+                uploadImage(key);
             }
         });
 
@@ -174,6 +199,13 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         // Inflate the layout for this fragment
         mView = inflater.inflate(R.layout.fragment_main, container, false);
         database = FirebaseDatabase.getInstance().getReference();
+
+        // Initialize cloud storage
+        storage = FirebaseStorage.getInstance();
+        storageRef = storage.getReference();
+
+        verifyStoragePermissions(getActivity());
+
         return mView;
     }
 
@@ -344,6 +376,54 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             });
             anim.setDuration(500);
             anim.start();
+        }
+    }
+
+    // Upload image to cloud storage
+    private void uploadImage(final String key) {
+        File file = new File(path);
+        if (!file.exists()) {
+            dialog.dismiss();
+            return;
+        }
+
+        Uri uri = Uri.fromFile(file);
+        StorageReference imgRef = storageRef.child("images/" + uri.getLastPathSegment() +
+                "_" + System.currentTimeMillis());
+
+        UploadTask uploadTask = imgRef.putFile(uri);
+
+        // Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                @SuppressWarnings("VisibleForTests")
+                Task<Uri> downloadUrl = taskSnapshot.getMetadata().getReference().getDownloadUrl();
+                database.child("events").child(key).child("imgUri").
+                        setValue(downloadUrl.toString());
+                File file = new File(path);
+                file.delete();
+                dialog.dismiss();
+            }
+        });
+    }
+
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
         }
     }
 
