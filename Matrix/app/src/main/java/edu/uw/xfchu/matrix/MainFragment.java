@@ -124,10 +124,10 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         mImageCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent pictureInent = new Intent(
+                Intent pictureIntent = new Intent(
                         MediaStore.ACTION_IMAGE_CAPTURE
                 );
-                startActivityForResult(pictureInent, REQUEST_CAPTURE_IMAGE);
+                startActivityForResult(pictureIntent, REQUEST_CAPTURE_IMAGE);
             }
         });
     }
