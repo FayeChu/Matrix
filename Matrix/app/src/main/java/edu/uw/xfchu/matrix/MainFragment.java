@@ -18,6 +18,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -54,9 +55,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -74,7 +77,7 @@ import static android.app.Activity.RESULT_OK;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MainFragment extends Fragment implements OnMapReadyCallback {
+public class MainFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private static final int REQUEST_CAPTURE_IMAGE = 100;
 
@@ -112,6 +115,18 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    // Event information part
+    private BottomSheetBehavior bottomSheetBehavior;
+    private ImageView mEventImageLike;
+    private ImageView mEventImageComment;
+    private ImageView mEventImageType;
+    private TextView mEventTextLike;
+    private TextView mEventTextType;
+    private TextView mEventTextLocation;
+    private TextView mEventTextTime;
+    private TrafficEvent mEvent;
+
+
     public MainFragment() {
         // Required empty public constructor
     }
@@ -119,6 +134,26 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     public static MainFragment newInstance() {
         MainFragment mainFragment = new MainFragment();
         return mainFragment;
+    }
+
+    private void setupBottomBehavior() {
+        //set up bottom up slide
+        final View nestedScrollView = (View) mView.findViewById(R.id.nestedScrollView);
+        bottomSheetBehavior = BottomSheetBehavior.from(nestedScrollView);
+
+        //set hidden initially
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+        //set expansion speed
+        bottomSheetBehavior.setPeekHeight(1000);
+
+        mEventImageLike = (ImageView)mView.findViewById(R.id.event_info_like_img);
+        mEventImageComment = (ImageView)mView.findViewById(R.id.event_info_comment_img);
+        mEventImageType = (ImageView)mView.findViewById(R.id.event_info_type_img);
+        mEventTextLike = (TextView)mView.findViewById(R.id.event_info_like_text);
+        mEventTextType = (TextView)mView.findViewById(R.id.event_info_type_text);
+        mEventTextLocation = (TextView)mView.findViewById(R.id.event_info_location_text);
+        mEventTextTime = (TextView)mView.findViewById(R.id.event_info_time_text);
     }
 
     private void setUpEventSpecs(final View dialogView) {
@@ -203,6 +238,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         // Initialize cloud storage
         storage = FirebaseStorage.getInstance();
         storageRef = storage.getReference();
+        setupBottomBehavior();
 
         verifyStoragePermissions(getActivity());
 
@@ -384,6 +420,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
         File file = new File(path);
         if (!file.exists()) {
             dialog.dismiss();
+            loadEventVisibleMap();
             return;
         }
 
@@ -403,12 +440,58 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 @SuppressWarnings("VisibleForTests")
+                // DownloadUrl ??
                 Task<Uri> downloadUrl = taskSnapshot.getMetadata().getReference().getDownloadUrl();
                 database.child("events").child(key).child("imgUri").
                         setValue(downloadUrl.toString());
                 File file = new File(path);
                 file.delete();
                 dialog.dismiss();
+                loadEventVisibleMap();
+            }
+        });
+    }
+
+    // Get center coordinate
+    private void loadEventVisibleMap() {
+        database.child("events").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot noteDataSnapshot : dataSnapshot.getChildren()) {
+                    TrafficEvent event = noteDataSnapshot.getValue(TrafficEvent.class);
+                    double eventLatitude = event.getEvent_latitude();
+                    double eventLongitude = event.getEvent_longitude();
+
+                    LatLng center = mMap.getCameraPosition().target;
+                    double centerLatitude = center.latitude;
+                    double centerLongitude = center.longitude;
+
+                    int distance = Utils.distanceBetweenTwoLocations(centerLatitude, centerLongitude,
+                            eventLatitude, eventLongitude);
+
+                    if (distance < 20) {
+                        LatLng latLng = new LatLng(eventLatitude, eventLongitude);
+                        MarkerOptions marker = new MarkerOptions().position(latLng);
+
+                        // Changing marker icon
+                        String type = event.getEvent_type();
+                        Bitmap icon = BitmapFactory.decodeResource(getContext().getResources(),
+                                Config.trafficMap.get(type));
+
+                        Bitmap resizeBitmap = Utils.getResizedBitmap(icon, 130, 130);
+
+                        marker.icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap));
+
+                        // adding marker
+                        Marker mker = mMap.addMarker(marker);
+                        mker.setTag(event);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                //TODO: do something
             }
         });
     }
@@ -454,6 +537,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         MapsInitializer.initialize(getContext());
+        googleMap.setOnMarkerClickListener(this);
 
         mMap = googleMap;
         googleMap.setMapStyle(
@@ -486,6 +570,52 @@ public class MainFragment extends Fragment implements OnMapReadyCallback {
 
         // Add marker to google map
         Marker mker = googleMap.addMarker(marker);
-
+        loadEventVisibleMap();
     }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        mEvent = (TrafficEvent) marker.getTag();
+        if (mEvent == null) {
+            return true;
+        }
+        String user = mEvent.getEvent_reporter_id();
+        String type = mEvent.getEvent_type();
+        long time = mEvent.getEvent_timestamp();
+        double latitude = mEvent.getEvent_latitude();
+        double longitutde = mEvent.getEvent_longitude();
+        int likeNumber = mEvent.getEvent_like_number();
+
+        String description = mEvent.getEvent_description();
+        marker.setTitle(description);
+        mEventTextLike.setText(String.valueOf(likeNumber));
+        mEventTextType.setText(type);
+
+        mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
+
+        if (user == null) {
+            user = "";
+        }
+        String info = "Reported by " + user + " " + Utils.timeTransformer(time);
+        mEventTextTime.setText(info);
+
+
+        int distance = 0;
+        locationTracker = new LocationTracker(getActivity());
+        locationTracker.getLocation();
+        if (locationTracker != null) {
+            distance = Utils.distanceBetweenTwoLocations(latitude, longitutde, locationTracker.getLatitude(), locationTracker.getLongitude());
+        }
+        mEventTextLocation.setText(distance + " miles away");
+
+        if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        } else {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+        }
+
+        return false;
+    }
+
 }
