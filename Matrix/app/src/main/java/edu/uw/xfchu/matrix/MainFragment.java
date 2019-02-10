@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -24,6 +25,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -154,6 +156,18 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
         mEventTextType = (TextView)mView.findViewById(R.id.event_info_type_text);
         mEventTextLocation = (TextView)mView.findViewById(R.id.event_info_location_text);
         mEventTextTime = (TextView)mView.findViewById(R.id.event_info_time_text);
+
+        mEventTextLocation = (TextView)mView.findViewById(R.id.event_info_location_text);
+        mEventTextTime = (TextView)mView.findViewById(R.id.event_info_time_text);
+
+        mEventImageLike.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int number = Integer.parseInt(mEventTextLike.getText().toString());
+                database.child("events").child(mEvent.getId()).child("event_like_number").setValue(number + 1);
+                mEventTextLike.setText(String.valueOf(number + 1));
+            }
+        });
     }
 
     private void setUpEventSpecs(final View dialogView) {
@@ -591,7 +605,26 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
         mEventTextLike.setText(String.valueOf(likeNumber));
         mEventTextType.setText(type);
 
-        mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
+        final String url = mEvent.getImgUri();
+        if (url == null) {   mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
+        } else {
+            new AsyncTask<Void, Void, Bitmap>() {
+                @Override
+                protected Bitmap doInBackground(Void... voids) {
+                    Bitmap bitmap = Utils.getBitmapFromURL(url);
+                    return bitmap;
+                }
+
+                @Override
+                protected void onPostExecute(Bitmap bitmap) {
+                    super.onPostExecute(bitmap);
+                    mEventImageType.setImageBitmap(bitmap);
+                }
+            }.execute();
+        }
+
+        // Set image
+        // mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
 
         if (user == null) {
             user = "";
@@ -599,7 +632,7 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
         String info = "Reported by " + user + " " + Utils.timeTransformer(time);
         mEventTextTime.setText(info);
 
-
+        // Get distance
         int distance = 0;
         locationTracker = new LocationTracker(getActivity());
         locationTracker.getLocation();
@@ -608,12 +641,20 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
         }
         mEventTextLocation.setText(distance + " miles away");
 
+        // Toggle bottom sheet
         if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         } else {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         }
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
+        });
 
         return false;
     }

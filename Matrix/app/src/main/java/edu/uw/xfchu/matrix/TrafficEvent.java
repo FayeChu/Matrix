@@ -11,6 +11,7 @@ public class TrafficEvent {
     private String event_level;
     private int event_like_number;
     private String event_description;
+    private String imgUri;
 
     public String getId() {
         return id;
@@ -90,5 +91,13 @@ public class TrafficEvent {
 
     public void setEvent_description(String event_description) {
         this.event_description = event_description;
+    }
+
+    public String getImgUri() {
+        return imgUri;
+    }
+
+    public void setImgUri(String imgUri) {
+        this.imgUri = imgUri;
     }
 }
