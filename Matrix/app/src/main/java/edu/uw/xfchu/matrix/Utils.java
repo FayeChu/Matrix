@@ -106,7 +106,7 @@ public class Utils {
             return minutes + " minutes ago";
         } else if (hours < 24) {
             return hours + " hours ago";
-        } else {git 
+        } else {
             return days + " days ago";
         }
     }
