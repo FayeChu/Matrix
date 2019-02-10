@@ -454,10 +454,16 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 @SuppressWarnings("VisibleForTests")
-                // DownloadUrl ??
+
                 Task<Uri> downloadUrl = taskSnapshot.getMetadata().getReference().getDownloadUrl();
-                database.child("events").child(key).child("imgUri").
-                        setValue(downloadUrl.toString());
+                downloadUrl.addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        database.child("events").child(key).child("imgUri").
+                                setValue(uri.toString());
+                    }
+                });
+
                 File file = new File(path);
                 file.delete();
                 dialog.dismiss();
@@ -606,7 +612,8 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
         mEventTextType.setText(type);
 
         final String url = mEvent.getImgUri();
-        if (url == null) {   mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
+        if (url == null) {
+            mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
         } else {
             new AsyncTask<Void, Void, Bitmap>() {
                 @Override
@@ -622,9 +629,6 @@ public class MainFragment extends Fragment implements OnMapReadyCallback, Google
                 }
             }.execute();
         }
-
-        // Set image
-        // mEventImageType.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(), Config.trafficMap.get(type)));
 
         if (user == null) {
             user = "";
