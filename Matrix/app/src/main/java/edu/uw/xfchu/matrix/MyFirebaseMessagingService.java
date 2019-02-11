@@ -4,6 +4,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
@@ -30,7 +32,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
         }
-        sendNotification("Send notification to start EventReporter");
+        sendNotification(remoteMessage);
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
@@ -41,7 +43,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     /**
      * Create and show a simple notification containing the received FCM message.
      */
-    private void sendNotification(String fcmmessage) {
+    private void sendNotification(RemoteMessage remoteMessage) {
         Intent intent = new Intent(this, ControlPanel.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -50,16 +52,22 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 PendingIntent.FLAG_ONE_SHOT);
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        String type = remoteMessage.getData().get("type");
+        String description = remoteMessage.getData().get("description");
+        Bitmap icon =  BitmapFactory.decodeResource(mContext.getResources(),
+                Config.trafficMap.get(type));
 
         //Create Notification according to builder pattern
         NotificationCompat.Builder notificationBuilder =
-                new NotificationCompat.Builder(this, "EventReporter");
+                new NotificationCompat.Builder(this, "firebase");
+
         notificationBuilder
-                .setSmallIcon(R.drawable.policeman)
-                .setContentTitle("FCM Message")
-                .setContentText(fcmmessage)
-                .setAutoCancel(true)
+                .setSmallIcon(R.drawable.baseline_notifications_none_black_18dp)
+                .setLargeIcon(icon)
+                .setContentTitle(type)
+                .setContentText(description)
                 .setSound(defaultSoundUri)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH)
                 .setContentIntent(pendingIntent);
 
         // Get Notification Manager
@@ -67,7 +75,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Send notification
-        notificationManager.notify(0, notificationBuilder.build());
+        notificationManager.notify(1, notificationBuilder.build());
     }
 
 
